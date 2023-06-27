@@ -26,6 +26,7 @@ func FetchTrivyDB(ctx context.Context, cacheDir string, light, quiet, skipUpdate
 	fmt.Fprintf(os.Stderr, "%s", "Fetching and updating Trivy DB ... \n")
 	appVersion := "99.9.9"
 	dbRepository := "ghcr.io/aquasecurity/trivy-db"
+	//javadbRepository := "ghcr.io/aquasecurity/trivy-java-db"
 	dbPath := db2.Path(cacheDir)
 	dbDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dbDir, 0700); err != nil {
@@ -222,6 +223,7 @@ func UpdateDB(ctx context.Context, cacheDir, dsn, vulnerabilityTableName, adviso
 		return err
 	}
 	fmt.Fprintf(os.Stderr, "%s\n", "done")
+
 	return nil
 }
 
