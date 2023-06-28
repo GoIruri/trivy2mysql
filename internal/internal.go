@@ -25,15 +25,15 @@ const chunkSize = 10000
 func FetchTrivyDB(ctx context.Context, cacheDir string, light, quiet, skipUpdate bool) error {
 	fmt.Fprintf(os.Stderr, "%s", "Fetching and updating Trivy DB ... \n")
 	appVersion := "99.9.9"
-	dbRepository := "ghcr.io/aquasecurity/trivy-db"
-	//javadbRepository := "ghcr.io/aquasecurity/trivy-java-db"
+	//dbRepository := "ghcr.io/aquasecurity/trivy-db"
+	javadbRepository := "ghcr.io/aquasecurity/trivy-java-db"
 	dbPath := db2.Path(cacheDir)
 	dbDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dbDir, 0700); err != nil {
 		return err
 	}
 
-	client := db.NewClient(cacheDir, quiet, db.WithDBRepository(dbRepository))
+	client := db.NewClient(cacheDir, quiet, db.WithDBRepository(javadbRepository))
 	needsUpdate, err := client.NeedsUpdate(appVersion, skipUpdate)
 	if err != nil {
 		return fmt.Errorf("database error: %w", err)
@@ -41,7 +41,7 @@ func FetchTrivyDB(ctx context.Context, cacheDir string, light, quiet, skipUpdate
 
 	if needsUpdate {
 		fmt.Fprintln(os.Stderr, "Need to update DB")
-		fmt.Fprintf(os.Stderr, "DB Repository: %s\n", dbRepository)
+		fmt.Fprintf(os.Stderr, "DB Repository: %s\n", javadbRepository)
 		fmt.Fprintln(os.Stderr, "Downloading DB...")
 		if err = client.Download(ctx, cacheDir, types.RemoteOptions{}); err != nil {
 			return fmt.Errorf("failed to download vulnerability DB: %w", err)
@@ -121,7 +121,7 @@ func UpdateDB(ctx context.Context, cacheDir, dsn, vulnerabilityTableName, adviso
 		return fmt.Errorf("unsupported driver '%s'", u.Driver)
 	}
 
-	trivydb, err := bolt.Open(filepath.Join(cacheDir, "db", "trivy.db"), 0600, &bolt.Options{Timeout: 1 * time.Second})
+	trivydb, err := bolt.Open(cacheDir+"/db/"+"trivy-java.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		return err
 	}
