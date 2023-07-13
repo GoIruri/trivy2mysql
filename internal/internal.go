@@ -35,13 +35,15 @@ func FetchTrivyDB(ctx context.Context, cacheDir string, light, quiet, skipUpdate
 	client := db.NewClient(cacheDir, quiet, db.WithDBRepository(dbRepository))
 	needsUpdate, err := client.NeedsUpdate(appVersion, skipUpdate)
 	if err != nil {
-		return fmt.Errorf("database error: %w", err)
+		fmt.Fprintln(os.Stderr, "update error")
+		return err
 	}
 
 	if needsUpdate {
 		fmt.Fprintln(os.Stderr, "Need to update DB, updating-----")
 		if err = client.Download(ctx, cacheDir, types.RemoteOptions{}); err != nil {
-			return fmt.Errorf("failed to download vulnerability DB: %w", err)
+			fmt.Fprintln(os.Stderr, "download error")
+			return err
 		}
 	}
 
@@ -125,7 +127,7 @@ func UpdateDB(ctx context.Context, cacheDir, dsn, vulnerabilityTableName, adviso
 	defer trivydb.Close()
 
 	if err := trivydb.View(func(tx *bolt.Tx) error {
-		fmt.Fprintf(os.Stderr, ">> Updating table '%s' ...\n", vulnerabilityTableName)
+		fmt.Fprintf(os.Stderr, "--->Updating table '%s' ...\n", vulnerabilityTableName)
 		if err := driver.TruncateVulns(ctx); err != nil {
 			return err
 		}
@@ -167,7 +169,7 @@ func UpdateDB(ctx context.Context, cacheDir, dsn, vulnerabilityTableName, adviso
 			sourceRe = append(sourceRe, re)
 		}
 
-		fmt.Fprintf(os.Stderr, ">> Updating table '%s' ...\n", advisoryTableName)
+		fmt.Fprintf(os.Stderr, "--->Updating table '%s' ...\n", advisoryTableName)
 		if err := driver.TruncateVulnAdvisories(ctx); err != nil {
 			return err
 		}
@@ -190,7 +192,7 @@ func UpdateDB(ctx context.Context, cacheDir, dsn, vulnerabilityTableName, adviso
 				}
 			}
 
-			fmt.Fprintf(os.Stderr, ">>> %s\n", s)
+			fmt.Fprintf(os.Stderr, "写入 %s\n", s)
 			c := b.Cursor()
 			var vulnds [][][]byte
 			for pkg, _ := c.First(); pkg != nil; pkg, _ = c.Next() {
@@ -227,13 +229,12 @@ func UpdateDB(ctx context.Context, cacheDir, dsn, vulnerabilityTableName, adviso
 var numRe = regexp.MustCompile(`\d+`)
 
 func parsePlatformAndSegment(s string) ([]byte, []byte) {
-	const alpineEdgeSegment = "edge"
 	platform := []byte(s)
 	segment := []byte("")
 	splited := strings.Split(s, " ")
 	if len(splited) > 1 {
 		last := splited[len(splited)-1]
-		if numRe.MatchString(last) || last == alpineEdgeSegment {
+		if numRe.MatchString(last) {
 			platform = []byte(strings.Join(splited[0:len(splited)-1], " "))
 			segment = []byte(last)
 		}

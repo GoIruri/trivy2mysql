@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 	trivylog "github.com/aquasecurity/trivy/pkg/log"
-	"github.com/shibukawa/configdir"
 	"github.com/spf13/cobra"
 	"os"
+	"trivy2mysql/config"
 	"trivy2mysql/internal"
 )
 
@@ -14,7 +14,6 @@ var (
 	light                    bool
 	skipInit                 bool
 	skipUpdate               bool
-	cacheDir                 string
 	vulnerabilitiesTableName string
 	adivisoryTableName       string
 	sources                  []string
@@ -26,11 +25,8 @@ var rootCmd = &cobra.Command{
 	Args:         cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		if cacheDir == "" {
-			cacheDir = cacheDirPath()
-		}
 		dsn := args[0]
-		if err := internal.FetchTrivyDB(ctx, cacheDir, light, quiet, skipUpdate); err != nil {
+		if err := internal.FetchTrivyDB(ctx, config.CacheDir, light, quiet, skipUpdate); err != nil {
 			return err
 		}
 		if !skipInit {
@@ -38,7 +34,7 @@ var rootCmd = &cobra.Command{
 				return err
 			}
 		}
-		if err := internal.UpdateDB(ctx, cacheDir, dsn, vulnerabilitiesTableName, adivisoryTableName, sources); err != nil {
+		if err := internal.UpdateDB(ctx, config.CacheDir, dsn, vulnerabilitiesTableName, adivisoryTableName, sources); err != nil {
 			return err
 		}
 
@@ -61,18 +57,10 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().BoolVarP(&light, "light", "", false, "light")
-	// rootCmd.Flags().BoolVarP(&quiet, "quiet", "", false, "quiet")
 	quiet = false
 	rootCmd.Flags().BoolVarP(&skipInit, "skip-init-db", "", false, "skip initializing target datasource")
 	rootCmd.Flags().BoolVarP(&skipUpdate, "skip-update", "", false, "skip updating Trivy DB")
-	rootCmd.Flags().StringVarP(&cacheDir, "cache-dir", "", "", "cache dir")
 	rootCmd.Flags().StringVarP(&vulnerabilitiesTableName, "vulnerabilities-table-name", "", "vulnerabilities", "Vulnerabilities Table Name")
 	rootCmd.Flags().StringVarP(&adivisoryTableName, "advisory-table-name", "", "vulnerability_advisories", "Vulnerability Advisories Table Name")
 	rootCmd.Flags().StringArrayVarP(&sources, "source", "", nil, "Vulnerability Source (supporting regexp)")
-}
-
-func cacheDirPath() string {
-	configDirs := configdir.New("", "trivy2mysql")
-	cache := configDirs.QueryCacheFolder()
-	return cache.Path
 }
