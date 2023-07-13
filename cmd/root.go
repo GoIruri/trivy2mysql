@@ -25,7 +25,7 @@ var rootCmd = &cobra.Command{
 	Args:         cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		dsn := args[0]
+		dsn := config.DSN
 		if err := internal.FetchTrivyDB(ctx, config.CacheDir, light, quiet, skipUpdate); err != nil {
 			return err
 		}
