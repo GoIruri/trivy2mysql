@@ -39,9 +39,7 @@ func FetchTrivyDB(ctx context.Context, cacheDir string, light, quiet, skipUpdate
 	}
 
 	if needsUpdate {
-		fmt.Fprintln(os.Stderr, "Need to update DB")
-		fmt.Fprintf(os.Stderr, "DB Repository: %s\n", dbRepository)
-		fmt.Fprintln(os.Stderr, "Downloading DB...")
+		fmt.Fprintln(os.Stderr, "Need to update DB, updating-----")
 		if err = client.Download(ctx, cacheDir, types.RemoteOptions{}); err != nil {
 			return fmt.Errorf("failed to download vulnerability DB: %w", err)
 		}

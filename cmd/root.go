@@ -2,13 +2,11 @@ package cmd
 
 import (
 	"context"
-	"os"
-	"trivy2mysql/internal"
-	"trivy2mysql/version"
-
 	trivylog "github.com/aquasecurity/trivy/pkg/log"
 	"github.com/shibukawa/configdir"
 	"github.com/spf13/cobra"
+	"os"
+	"trivy2mysql/internal"
 )
 
 var (
@@ -24,10 +22,7 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:          "trivy2mysql [DSN]",
-	Short:        "trivy2mysql is a tool for migrating/converting vulnerability information from Trivy DB to other datasource",
-	Long:         `trivy2mysql is a tool for migrating/converting vulnerability information from Trivy DB to other datasource.`,
 	SilenceUsage: true,
-	Version:      version.Version,
 	Args:         cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
@@ -38,13 +33,11 @@ var rootCmd = &cobra.Command{
 		if err := internal.FetchTrivyDB(ctx, cacheDir, light, quiet, skipUpdate); err != nil {
 			return err
 		}
-
 		if !skipInit {
 			if err := internal.InitDB(ctx, dsn, vulnerabilitiesTableName, adivisoryTableName); err != nil {
 				return err
 			}
 		}
-
 		if err := internal.UpdateDB(ctx, cacheDir, dsn, vulnerabilitiesTableName, adivisoryTableName, sources); err != nil {
 			return err
 		}
